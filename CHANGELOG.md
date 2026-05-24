@@ -6,6 +6,30 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Known limitations (discovered via 2026-05-25 dogfood)
+
+`probe_api_endpoint` substring assertions are naïve in two ways. Both
+surfaced as false-positive `mismatch` verdicts on real probes, not as
+actual API misbehavior. Will be addressed in v0.1.1 once a third anchor
+case accumulates (per skill-shape-recognition discipline — 2/5 signals so
+far, holding for 1 more before redesigning).
+
+- **B1**: `expected_response_lacks` substrings match anywhere in the raw
+  response body, including metadata field names. Using a generic word like
+  `"error"` will collide with response shapes that contain
+  `"error_count":0` etc. Workaround: use more specific patterns
+  (`"\"error\":"`, or the full JSON-escaped path).
+- **B2**: substring matching is unaware of nested-JSON escape sequences.
+  A response with `choices[0].message.content` containing JSON like
+  `{"city":"Paris"}` is rendered in the raw response body as
+  `"content":"{\"city\":\"Paris\"}"`. A naïve `expected_response_contains=['"city"']`
+  will miss it. Workaround: assert against the escaped form
+  (`'\\\"city\\\"'`) or parse the response.
+
+Planned for v0.1.1: optional `decode_json_in_response` flag that
+unescapes JSON string values before substring matching, plus an
+`expected_json_path_values` parameter for path-targeted assertions.
+
 ## [0.1.0] — 2026-05-25
 
 ### Added
