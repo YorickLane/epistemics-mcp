@@ -10,6 +10,7 @@ from typing import Any, Literal
 
 from mcp.server.fastmcp import FastMCP
 
+from epistemics.tools.anti_stale import anti_stale_directive
 from epistemics.tools.probe_api import probe_api_endpoint
 
 mcp = FastMCP("epistemics")
@@ -58,6 +59,40 @@ def probe_api_endpoint_tool(
         follow_redirects=follow_redirects,
     )
     return verdict.as_dict()
+
+
+@mcp.tool()
+def anti_stale_directive_tool(
+    today_iso: str,
+    ground_truth: dict[str, Any] | None = None,
+    language: Literal["en", "zh"] = "en",
+) -> str:
+    """Build a prompt directive that anchors LLM to caller-provided ground truth.
+
+    Pure string builder. No HTTP call, no LLM call, zero side effects.
+    Returns a plain-text markdown directive ready to embed in an LLM prompt.
+
+    Use when constructing prompts for another LLM that might blend training-
+    snapshot stale references with the data you're providing — most commonly
+    dates ("today is X"), version numbers, strategy state, pricing, or API
+    endpoints. Embeds the directive that anchors the model to your values.
+
+    Anchor case: 2026-05-25 polymarket-trading `afcee7b` — Sonnet 4.6 daily
+    review hallucinated today as "2025-05-17" until this directive was added.
+
+    Args:
+        today_iso: ISO date (e.g. "2026-05-25") for today-anchoring.
+        ground_truth: Optional key→value pairs of verified current facts.
+        language: "en" (default) or "zh".
+
+    Returns:
+        Markdown string ready to embed verbatim into an LLM prompt.
+    """
+    return anti_stale_directive(
+        today_iso=today_iso,
+        ground_truth=ground_truth,
+        language=language,
+    )
 
 
 def main() -> int:

@@ -17,6 +17,19 @@ project follows [Semantic Versioning](https://semver.org/).
   weak-verification warning, response truncation, nested
   dict/list placeholder recursion, follow-redirects on/off, and
   wall-clock `elapsed_ms` accuracy on error paths.
+- **`anti_stale_directive`** tool — pure string builder for "use these
+  values, do not infer from training memory" prompt directive. Anchors
+  downstream LLM to caller-provided ground truth (date / state / version
+  / pricing). Sits at prompt layer instead of tool layer. No HTTP, no
+  LLM, zero side effects. Bilingual (en/zh). Promoted directly from
+  G11 deferred candidate after sister Claude self-emerged the pattern
+  in polymarket-trading `afcee7b` (R1 9-edit ship, item 9) and proved
+  effectiveness before the abstract codify — pattern was already real,
+  defer-to-v0.2 was a reflex not a real constraint.
+- `tests/test_anti_stale.py` — 8 unit tests covering en/zh phrasing,
+  empty vs populated ground truth, dict insertion order preservation,
+  Unicode pass-through, inert-function semantics, anchor case replay.
+  Full suite: **20/20 pass in 0.11s**.
 
 ### Fixed (2026-05-25 dogfood session 2)
 - **G2**: status-only match (no substring assertions) now emits a
@@ -68,21 +81,17 @@ Logged for triage; not in v0.1.x scope:
 - **G10**: httpx HTTP/2, cookies, and session reuse not surfaced. Single
   unauthenticated probe is the design — flows that need login → probe
   need v0.3+.
-- **G11**: no helper for "anti-stale prompt directive" string builder.
-  Pattern surfaced 2026-05-25 18:14 BJ when downstream caller's LLM-driven
-  artifact (polymarket-trading `polymarket_review.py` Sonnet 4.6 daily
-  review) hallucinated `2025-05-17` as today's date despite prompt
-  containing current data. Fix required explicit
-  `"当前日期 {today_iso}, 不要凭训练记忆推断"` directive in the prompt to
-  anchor LLM date/state awareness against training-snapshot drift.
-  Generalizable as `anti_stale_directive(today_iso, ground_truth: dict)
-  -> str` pure string builder (no API call, no LLM, zero side effects).
-  Same family as `probe_api_endpoint` philosophy — "force caller-provided
-  ground truth over frozen training snapshot" — but at **prompt layer
-  instead of tool layer**. Use case: any caller building LLM prompts
-  where the LLM might blend training-snapshot stale references with
-  caller's current data (dated commit refs / version numbers / strategy
-  state / pricing tables / API endpoints).
+- ~~**G11**~~ → **SHIPPED 2026-05-25 18:55 BJ** as `anti_stale_directive`
+  tool (see Added section above). Originally deferred to v0.2+; promoted
+  to v0.1.x mid-session after Yorick pushback "为什么不现在做" — the
+  defer reflex was caught as a `work_philosophy § 10 Default-decision
+  audit` anti-pattern: deferring 30-line pure-string-builder to "v0.2
+  batch" had no real blocker, just inertia. Pattern was already proven
+  effective (sister Claude self-emerged the same pattern in
+  polymarket-trading `afcee7b` 18:14 BJ, item 9 of R1 9-edit ship), so
+  the abstract "wait for 3+ anchor signals" skill-shape rule didn't
+  apply — the pattern wasn't a new behavioral hypothesis, it was a
+  proven pattern needing codification.
 
 ### Dogfood meta
 

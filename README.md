@@ -109,6 +109,7 @@ The status-only probe in step 1 will emit a `weak verification` note in
 | Tool | What | LLM needed? |
 |------|------|-------------|
 | ✅ `probe_api_endpoint` | Controlled HTTP request + assertion verdict | No |
+| ✅ `anti_stale_directive` | Pure string builder for "use these values, do not infer from training memory" prompt directive — anchors downstream LLM to caller-provided ground truth (date / state / version / pricing). Sits at prompt layer instead of tool layer. | No |
 
 ## Roadmap
 
