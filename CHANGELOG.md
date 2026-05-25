@@ -68,6 +68,21 @@ Logged for triage; not in v0.1.x scope:
 - **G10**: httpx HTTP/2, cookies, and session reuse not surfaced. Single
   unauthenticated probe is the design — flows that need login → probe
   need v0.3+.
+- **G11**: no helper for "anti-stale prompt directive" string builder.
+  Pattern surfaced 2026-05-25 18:14 BJ when downstream caller's LLM-driven
+  artifact (polymarket-trading `polymarket_review.py` Sonnet 4.6 daily
+  review) hallucinated `2025-05-17` as today's date despite prompt
+  containing current data. Fix required explicit
+  `"当前日期 {today_iso}, 不要凭训练记忆推断"` directive in the prompt to
+  anchor LLM date/state awareness against training-snapshot drift.
+  Generalizable as `anti_stale_directive(today_iso, ground_truth: dict)
+  -> str` pure string builder (no API call, no LLM, zero side effects).
+  Same family as `probe_api_endpoint` philosophy — "force caller-provided
+  ground truth over frozen training snapshot" — but at **prompt layer
+  instead of tool layer**. Use case: any caller building LLM prompts
+  where the LLM might blend training-snapshot stale references with
+  caller's current data (dated commit refs / version numbers / strategy
+  state / pricing tables / API endpoints).
 
 ### Dogfood meta
 
