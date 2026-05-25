@@ -88,6 +88,22 @@ print(verdict.response_excerpt)     # first 4000 chars
 at call time. **Resolved secrets are never returned in the verdict** —
 only the placeholder names are echoed back.
 
+## Usage pattern: broad probe first, narrow assert second
+
+A common dogfood anti-pattern is "I think endpoint X supports Y, let me
+probe with the exact substring I expect." This still depends on stale
+caller knowledge of the upstream schema — `probe_api_endpoint` will only
+falsify the specific substring you guessed, not surface the real shape.
+
+**Better pattern**:
+
+1. **Broad probe** — call the endpoint with no `expected_response_contains`,
+   inspect `response_excerpt` to see the real shape.
+2. **Narrow assert** — re-probe with the exact strings observed from step 1.
+
+The status-only probe in step 1 will emit a `weak verification` note in
+`verdict.notes` to remind you it's a discovery call, not a verification.
+
 ## Tools (v0.1.0)
 
 | Tool | What | LLM needed? |

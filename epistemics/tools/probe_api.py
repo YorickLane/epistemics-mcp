@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
@@ -74,6 +75,7 @@ def probe_api_endpoint(
     expected_response_lacks: list[str] | None = None,
     max_response_chars: int = 4000,
     timeout_seconds: float = 60.0,
+    follow_redirects: bool = True,
 ) -> ProbeVerdict:
     """Send a controlled HTTP request and return a structured verdict.
 
@@ -93,12 +95,18 @@ def probe_api_endpoint(
             (e.g. ["refused", "cannot access"] to catch capability denials).
         max_response_chars: Cap on response_excerpt length.
         timeout_seconds: HTTP timeout.
+        follow_redirects: Follow 3xx redirects (default True). Disable
+            when probing for redirect chains specifically.
 
     Returns:
         ProbeVerdict with structured findings.
     """
     placeholders_seen: list[str] = []
     notes: list[str] = []
+    started_at = time.monotonic()
+
+    def _elapsed() -> int:
+        return int((time.monotonic() - started_at) * 1000)
 
     try:
         resolved_url = _resolve_env_placeholders(url, placeholders_seen)
@@ -116,7 +124,7 @@ def probe_api_endpoint(
             matched_substrings=[],
             missed_substrings=[],
             forbidden_substrings_found=[],
-            elapsed_ms=0,
+            elapsed_ms=_elapsed(),
             notes=[str(e)],
         )
 
@@ -131,7 +139,9 @@ def probe_api_endpoint(
         request_kwargs["content"] = resolved_body
 
     try:
-        with httpx.Client(timeout=timeout_seconds) as client:
+        with httpx.Client(
+            timeout=timeout_seconds, follow_redirects=follow_redirects
+        ) as client:
             response = client.request(
                 method=method,
                 url=resolved_url,
@@ -146,7 +156,7 @@ def probe_api_endpoint(
             matched_substrings=[],
             missed_substrings=[],
             forbidden_substrings_found=[],
-            elapsed_ms=0,
+            elapsed_ms=_elapsed(),
             notes=notes + [f"http error: {type(e).__name__}: {e}"],
         )
 
@@ -167,6 +177,12 @@ def probe_api_endpoint(
 
     if status_ok and contains_ok and lacks_ok:
         verdict: Literal["match", "mismatch", "error"] = "match"
+        if not must_contain and not must_lack:
+            notes.append(
+                "weak verification: no substring assertions provided — "
+                "status-only match. Add expected_response_contains / "
+                "expected_response_lacks to actually verify capability."
+            )
     else:
         verdict = "mismatch"
         if not status_ok:
@@ -183,6 +199,6 @@ def probe_api_endpoint(
         matched_substrings=matched,
         missed_substrings=missed,
         forbidden_substrings_found=forbidden_found,
-        elapsed_ms=int(response.elapsed.total_seconds() * 1000),
+        elapsed_ms=_elapsed(),
         notes=notes,
     )

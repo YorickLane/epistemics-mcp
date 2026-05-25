@@ -26,6 +26,7 @@ def probe_api_endpoint_tool(
     expected_response_lacks: list[str] | None = None,
     max_response_chars: int = 4000,
     timeout_seconds: float = 60.0,
+    follow_redirects: bool = True,
 ) -> dict[str, Any]:
     """Send a controlled HTTP request and return a structured verdict.
 
@@ -40,6 +41,9 @@ def probe_api_endpoint_tool(
     Use `expected_response_lacks` to catch capability denials (e.g. ["cannot
     transcribe", "do not support"]). Use `expected_response_contains` to
     assert positive evidence the API actually did what you claimed.
+
+    `follow_redirects` defaults to True; set False when probing for the
+    redirect itself (e.g. asserting a known 302 to login).
     """
     verdict = probe_api_endpoint(
         method=method,
@@ -51,6 +55,7 @@ def probe_api_endpoint_tool(
         expected_response_lacks=expected_response_lacks,
         max_response_chars=max_response_chars,
         timeout_seconds=timeout_seconds,
+        follow_redirects=follow_redirects,
     )
     return verdict.as_dict()
 
