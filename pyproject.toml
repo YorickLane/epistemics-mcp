@@ -1,21 +1,25 @@
 [project]
 name = "epistemics-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server that verifies capability/version/freshness claims before shipping them"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{name = "Yorick Lane"}]
 keywords = ["mcp", "verification", "ai-agents", "epistemics", "claude"]
-dependencies = [
-    "mcp>=1.0.0",
-    "httpx[socks]>=0.27.0",
-    "pydantic>=2.0",
-]
+# Base install is pure-stdlib. The `anti_stale_directive` helper has zero
+# third-party deps, so consumers that only want the prompt-layer helper can
+# `pip install epistemics-mcp` without pulling mcp / httpx / pydantic.
+dependencies = []
 
 [project.optional-dependencies]
+# `probe` — needed to use probe_api_endpoint as a library (httpx HTTP probe).
+probe = ["httpx[socks]>=0.27.0"]
+# `server` — needed to run the MCP server (FastMCP entrypoint). server.py
+# imports both tool modules, so the server extra includes the probe deps.
+server = ["mcp>=1.0.0", "httpx[socks]>=0.27.0"]
 judge = ["openai>=1.0.0"]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.6"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "ruff>=0.6", "httpx[socks]>=0.27.0", "mcp>=1.0.0"]
 
 [project.scripts]
 epistemics-mcp = "server:main"

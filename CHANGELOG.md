@@ -6,6 +6,27 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-06-01
+
+### Changed (packaging — install-path behavior change)
+- **`[server]` extras split.** The base `pip install epistemics-mcp` is now
+  pure-stdlib (zero third-party dependencies). The MCP server deps (`mcp`,
+  `httpx[socks]`) moved to a `server` optional-dependency extra, and the
+  HTTP-probe dep (`httpx[socks]`) is also exposed as a standalone `probe`
+  extra. Dropped `pydantic` from the explicit dependency list — nothing in
+  this package imports it directly (it arrives transitively via `mcp`).
+  - **Breaking for server users:** running the MCP server now requires
+    `pip install epistemics-mcp[server]` (or `pip install -e '.[server]'`
+    from source). A plain base install no longer ships `mcp`/`httpx`.
+  - **Rationale (dogfood 2026-05-25, memory § K.5):** integrating the
+    pure-stdlib `anti_stale_directive` helper into `polymarket_review.py`
+    forced `pip install --no-deps` because the base install dragged in the
+    full server tree (`mcp` / `httpx[socks]` / `pydantic`) for a consumer
+    that only builds a directive string. This split removes that workaround.
+  - **Verified:** lean venv `pip install -e .` then `pip list | grep -iE
+    'mcp|httpx|pydantic'` returns empty; `from epistemics.tools.anti_stale
+    import anti_stale_directive` imports clean with zero third-party deps.
+
 ### Added (2026-05-25 dogfood session 2)
 - `follow_redirects` parameter (default `True`) on `probe_api_endpoint`
   and `probe_api_endpoint_tool`. Old behavior silently kept httpx
@@ -124,5 +145,6 @@ section institutionalize the better usage pattern.
   `epistemics 1.27.1`.
 - `claude mcp list`: `epistemics ... ✓ Connected`.
 
-[Unreleased]: https://github.com/YorickLane/epistemics-mcp/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/YorickLane/epistemics-mcp/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/YorickLane/epistemics-mcp/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/YorickLane/epistemics-mcp/releases/tag/v0.1.0

@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![MCP](https://img.shields.io/badge/MCP-2025--06--18-green.svg)](https://modelcontextprotocol.io/)
-[![Status](https://img.shields.io/badge/status-v0.1.0%20dogfood-orange.svg)](#roadmap)
+[![Status](https://img.shields.io/badge/status-v0.1.1%20dogfood-orange.svg)](#roadmap)
 
 ## Why
 
@@ -41,12 +41,30 @@ exact replay that catches the wrong claim.
 - **MCP-vs-API schema gaps** (v0.2) — "does my MCP expose every parameter the
   upstream API actually supports?"
 
-## Quick start
+## Install
+
+The package splits into a lean stdlib core plus optional extras, so helper-only
+consumers don't pull the MCP server dependency tree:
+
+| Install | Pulls | Use when |
+|---------|-------|----------|
+| `pip install epistemics-mcp` | nothing (pure stdlib) | you only need the `anti_stale_directive` prompt-layer helper |
+| `pip install epistemics-mcp[probe]` | `httpx[socks]` | you use `probe_api_endpoint` as a Python library |
+| `pip install epistemics-mcp[server]` | `mcp` + `httpx[socks]` | you want to run the MCP server |
+
+> **Behavior change (v0.1.1):** the base install no longer pulls `mcp` /
+> `httpx` / `pydantic`. To run the MCP server you now need the `[server]`
+> extra. Existing installs that ran the server via a plain `pip install -e .`
+> must reinstall as `pip install -e '.[server]'`. Motivated by dogfood
+> (2026-05-25): a consumer that only needed the pure-stdlib helper was forced
+> to `pip install --no-deps` to avoid the full server tree.
+
+## Quick start (MCP server)
 
 ```bash
 git clone https://github.com/YorickLane/epistemics-mcp
 cd epistemics-mcp
-uv venv && uv pip install -e .
+uv venv && uv pip install -e '.[server]'
 
 # Register with Claude Code (per-user, stdio transport)
 claude mcp add -s user -t stdio epistemics \
@@ -55,7 +73,21 @@ claude mcp add -s user -t stdio epistemics \
 
 Restart Claude Code; the `probe_api_endpoint_tool` is now available.
 
-Or use as a Python library (works without Claude Code):
+### As a Python library
+
+The pure-stdlib helper works on the base install (no extras):
+
+```python
+from epistemics.tools.anti_stale import anti_stale_directive
+
+directive = anti_stale_directive(
+    today_iso="2026-05-25",
+    ground_truth={"trade_status": "ACTIVE since 5/23"},
+)
+# embed `directive` verbatim into a downstream LLM prompt
+```
+
+The HTTP probe needs the `[probe]` extra (`pip install epistemics-mcp[probe]`):
 
 ```python
 from epistemics.tools.probe_api import probe_api_endpoint
