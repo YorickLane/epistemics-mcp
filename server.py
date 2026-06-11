@@ -13,7 +13,20 @@ from mcp.server.fastmcp import FastMCP
 from epistemics.tools.anti_stale import anti_stale_directive
 from epistemics.tools.probe_api import probe_api_endpoint
 
-mcp = FastMCP("epistemics")
+mcp = FastMCP(
+    "epistemics",
+    instructions=(
+        "Verification-first helpers. Reach for these BEFORE shipping claims "
+        "about external state:\n"
+        "- probe_api_endpoint_tool: zero-hop HTTP probe for capability/version/"
+        "endpoint claims ('API X supports Y', 'endpoint exists', 'tier allows Z') "
+        "— send the contradicting request instead of trusting docs or training "
+        "memory.\n"
+        "- anti_stale_directive_tool: when building a prompt for another LLM, "
+        "embed this directive so it honors caller-provided dates/versions/state "
+        "over its training snapshot."
+    ),
+)
 
 
 @mcp.tool()

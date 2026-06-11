@@ -6,6 +6,12 @@ project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- FastMCP `instructions` so MCP hosts surface when to reach for each tool.
+  Trigger-surface audit (2026-06-12) found zero routing surfaces beyond the
+  tool descriptions themselves — hosts that render server instructions now
+  get explicit "call before shipping external-state claims" routing hints.
+
 ## [0.1.1] — 2026-06-01
 
 ### Changed (packaging — install-path behavior change)
