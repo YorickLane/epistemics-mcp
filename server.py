@@ -1,6 +1,7 @@
 """epistemics-mcp MCP server.
 
-v0.1.0 ships one tool: `probe_api_endpoint`. More tools in v0.2.
+v0.1.x ships two tools: `probe_api_endpoint` + `anti_stale_directive`.
+More tools in v0.2 (signal-gated on dogfood).
 """
 
 from __future__ import annotations
